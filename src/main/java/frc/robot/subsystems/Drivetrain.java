@@ -26,30 +26,51 @@ import frc.robot.util.PID;
 
 public class Drivetrain extends SubsystemBase
 {
-    private WPI_TalonSRX frontLDrive = new WPI_TalonSRX(Constants.leftDriveACAN);
-    private WPI_TalonSRX backLDrive = new WPI_TalonSRX(Constants.leftDriveBCAN);
-    private WPI_TalonSRX frontRDrive = new WPI_TalonSRX(Constants.rightDriveACAN);
-    private WPI_TalonSRX backRDrive = new WPI_TalonSRX(Constants.rightDriveBCAN);
+    private final WPI_TalonSRX m_leftFrontDriveMotor;
+    private final WPI_TalonSRX m_rightFrontDriveMotor;
+    private final WPI_TalonSRX m_leftRearDriveMotor;
+    private final WPI_TalonSRX m_rightRearDriveMotor; 
 
-    final ADXRS450_Gyro gyro = new ADXRS450_Gyro();
+    private final ADXRS450_Gyro m_gyro;
 
-    //private final Encoder rightEncoder = new Encoder(1, 2);
-    //private final Encoder leftEncoder = new Encoder(3, 4);
 
-    private final PID turnPID = new PID(Constants.PTurn, Constants.ITurn, Constants.DTurn, Constants.turnEpsilon);
-    private final PID drivePID = new PID(Constants.PDrive, Constants.IDrive, Constants.DDrive, 1.0);
+    private final PID m_turnPID;
+    private final PID m_drivePID;
 
-    private final SpeedControllerGroup leftDriveGroup = new SpeedControllerGroup(frontLDrive, backLDrive);
-    private final SpeedControllerGroup rightDriveGroup = new SpeedControllerGroup(frontRDrive, backRDrive);
+    private final SpeedControllerGroup leftDriveGroup; 
+    private final SpeedControllerGroup rightDriveGroup;
 
-    private final DifferentialDrive drive = new DifferentialDrive(leftDriveGroup, rightDriveGroup);
+    private final DifferentialDrive m_drive;
 
-    private double gyroWorkingZero = 0;
+    private double m_gyroWorkingZero = 0;
 
-    public Drivetrain()
+    public Drivetrain(WPI_TalonSRX leftFrontDriveMotor, WPI_TalonSRX rightFrontDriveMotor, 
+                      WPI_TalonSRX leftRearDriveMotor, WPI_TalonSRX rightRearDriveMotor,
+                      ADXRS450_Gyro gyro)
     {
+        System.out.println("\t In Drivetrain Constructor");
+        
+        m_leftFrontDriveMotor = leftFrontDriveMotor;
+        m_rightFrontDriveMotor = rightFrontDriveMotor;
+        m_leftRearDriveMotor = leftRearDriveMotor;
+        m_rightRearDriveMotor = leftRearDriveMotor;
+
+        m_gyro = gyro;// = new ADXRS450_Gyro();
+
+
+        m_turnPID = new PID(Constants.PTurn, Constants.ITurn, Constants.DTurn, Constants.turnEpsilon);
+        m_drivePID = new PID(Constants.PDrive, Constants.IDrive, Constants.DDrive, 1.0);
+
+
+
+        leftDriveGroup = new SpeedControllerGroup(m_leftFrontDriveMotor, m_leftRearDriveMotor);
+        rightDriveGroup = new SpeedControllerGroup(m_rightFrontDriveMotor, m_rightRearDriveMotor);
+    
+        m_drive = new DifferentialDrive(leftDriveGroup, rightDriveGroup);
+
         driveTrainConfig();
     }
+
 
     /**
      * Gets creates and Configures the Drivetrain used in other subsystems
@@ -58,90 +79,92 @@ public class Drivetrain extends SubsystemBase
      */
     private void driveTrainConfig()
     {
-        frontLDrive.configFactoryDefault();
-        backLDrive.configFactoryDefault();
-        frontRDrive.configFactoryDefault();
-        backRDrive.configFactoryDefault();
+        // leftDriveGroup.get
+    
+        m_leftFrontDriveMotor.configFactoryDefault();
+        m_leftRearDriveMotor.configFactoryDefault();
+        m_rightFrontDriveMotor.configFactoryDefault();
+        m_rightRearDriveMotor.configFactoryDefault();
 
-        turnPID.setMaxOutput(1.0);
-        drivePID.setMaxOutput(1.0);
+        m_turnPID.setMaxOutput(1.0);
+        m_drivePID.setMaxOutput(1.0);
 
-        frontRDrive.setInverted(true);
-        backRDrive.setInverted(true);
+        m_rightFrontDriveMotor.setInverted(true);
+        m_rightRearDriveMotor.setInverted(true);
 
-        frontLDrive.configOpenloopRamp(Constants.kRampRate);
-        backLDrive.configOpenloopRamp(Constants.kRampRate);
-        frontRDrive.configOpenloopRamp(Constants.kRampRate);
-        backRDrive.configOpenloopRamp(Constants.kRampRate);
+        m_leftFrontDriveMotor.configOpenloopRamp(Constants.kRampRate);
+        m_leftRearDriveMotor.configOpenloopRamp(Constants.kRampRate);
+        m_rightFrontDriveMotor.configOpenloopRamp(Constants.kRampRate);
+        m_rightRearDriveMotor.configOpenloopRamp(Constants.kRampRate);
 
-        frontLDrive.setNeutralMode(NeutralMode.Brake);
-        backLDrive.setNeutralMode(NeutralMode.Brake);
-        frontRDrive.setNeutralMode(NeutralMode.Brake);
-        backRDrive.setNeutralMode(NeutralMode.Brake);
+        m_leftFrontDriveMotor.setNeutralMode(NeutralMode.Brake);
+        m_leftRearDriveMotor.setNeutralMode(NeutralMode.Brake);
+        m_rightFrontDriveMotor.setNeutralMode(NeutralMode.Brake);
+        m_rightRearDriveMotor.setNeutralMode(NeutralMode.Brake);
 
-        frontLDrive.enableCurrentLimit(true);
-        frontLDrive.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
-        frontLDrive.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
-        frontLDrive.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
+        m_leftFrontDriveMotor.enableCurrentLimit(true);
+        m_leftFrontDriveMotor.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
+        m_leftFrontDriveMotor.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
+        m_leftFrontDriveMotor.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
 
-        backLDrive.enableCurrentLimit(true);
-        backLDrive.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
-        backLDrive.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
-        backLDrive.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
+        m_leftRearDriveMotor.enableCurrentLimit(true);
+        m_leftRearDriveMotor.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
+        m_leftRearDriveMotor.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
+        m_leftRearDriveMotor.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
 
-        frontRDrive.enableCurrentLimit(true);
-        frontRDrive.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
-        frontRDrive.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
-        frontRDrive.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
+        m_rightFrontDriveMotor.enableCurrentLimit(true);
+        m_rightFrontDriveMotor.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
+        m_rightFrontDriveMotor.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
+        m_rightFrontDriveMotor.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
 
-        backRDrive.enableCurrentLimit(true);
-        backRDrive.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
-        backRDrive.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
-        backRDrive.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
+        m_rightRearDriveMotor.enableCurrentLimit(true);
+        m_rightRearDriveMotor.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
+        m_rightRearDriveMotor.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
+        m_rightRearDriveMotor.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
     }
 
     public void autoDriveTrainConfig()
     {
-        frontLDrive.configFactoryDefault();
-        backLDrive.configFactoryDefault();
-        frontRDrive.configFactoryDefault();
-        backRDrive.configFactoryDefault();
+        m_leftFrontDriveMotor.configFactoryDefault();
+        m_leftRearDriveMotor.configFactoryDefault();
+        m_rightFrontDriveMotor.configFactoryDefault();
+        m_rightRearDriveMotor.configFactoryDefault();
 
-        turnPID.setMaxOutput(1.0);
-        drivePID.setMaxOutput(1.0);
+        m_turnPID.setMaxOutput(1.0);
+        m_drivePID.setMaxOutput(1.0);
 
-        frontRDrive.setInverted(true);
-        backRDrive.setInverted(true);
+        m_rightFrontDriveMotor.setInverted(true);
+        m_rightRearDriveMotor.setInverted(true);
 
-        frontLDrive.setNeutralMode(NeutralMode.Brake);
-        backLDrive.setNeutralMode(NeutralMode.Brake);
-        frontRDrive.setNeutralMode(NeutralMode.Brake);
-        backRDrive.setNeutralMode(NeutralMode.Brake);
+        m_leftFrontDriveMotor.setNeutralMode(NeutralMode.Brake);
+        m_leftRearDriveMotor.setNeutralMode(NeutralMode.Brake);
+        m_rightFrontDriveMotor.setNeutralMode(NeutralMode.Brake);
+        m_rightRearDriveMotor.setNeutralMode(NeutralMode.Brake);
 
-        frontLDrive.enableCurrentLimit(true);
-        frontLDrive.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
-        frontLDrive.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
-        frontLDrive.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
+        m_leftFrontDriveMotor.enableCurrentLimit(true);
+        m_leftFrontDriveMotor.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
+        m_leftFrontDriveMotor.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
+        m_leftFrontDriveMotor.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
 
-        backLDrive.enableCurrentLimit(true);
-        backLDrive.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
-        backLDrive.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
-        backLDrive.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
+        m_leftRearDriveMotor.enableCurrentLimit(true);
+        m_leftRearDriveMotor.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
+        m_leftRearDriveMotor.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
+        m_leftRearDriveMotor.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
 
-        frontRDrive.enableCurrentLimit(true);
-        frontRDrive.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
-        frontRDrive.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
-        frontRDrive.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
+        m_rightFrontDriveMotor.enableCurrentLimit(true);
+        m_rightFrontDriveMotor.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
+        m_rightFrontDriveMotor.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
+        m_rightFrontDriveMotor.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
 
-        backRDrive.enableCurrentLimit(true);
-        backRDrive.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
-        backRDrive.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
-        backRDrive.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
+        m_rightRearDriveMotor.enableCurrentLimit(true);
+        m_rightRearDriveMotor.configContinuousCurrentLimit(Constants.kContinuousCurrentLimit);
+        m_rightRearDriveMotor.configPeakCurrentDuration(Constants.kPeakCurrentDuration);
+        m_rightRearDriveMotor.configPeakCurrentLimit(Constants.kPeakCurrentLimit);
 
-        frontLDrive.setSafetyEnabled(false);
-        backLDrive.setSafetyEnabled(false);
-        frontRDrive.setSafetyEnabled(false);
-        backRDrive.setSafetyEnabled(false);
+        m_leftFrontDriveMotor.setSafetyEnabled(false);
+        m_leftRearDriveMotor.setSafetyEnabled(false);
+        m_rightFrontDriveMotor.setSafetyEnabled(false);
+        m_rightRearDriveMotor.setSafetyEnabled(false);
     }
 
 
@@ -154,7 +177,7 @@ public class Drivetrain extends SubsystemBase
      */
     public void calibrateGyro()
     {
-        gyro.calibrate();
+        m_gyro.calibrate();
     }
 
     /**
@@ -166,7 +189,7 @@ public class Drivetrain extends SubsystemBase
      */
     public void driveForwardSlowly()
     {
-        drive.arcadeDrive(0.35, 0);
+        m_drive.arcadeDrive(0.35, 0);
     }
 
     /**
@@ -177,10 +200,10 @@ public class Drivetrain extends SubsystemBase
      */
     public void setLeftRightPower(final double left, final double right)
     {
-        frontLDrive.set(left);
-        backLDrive.set(left);
-        frontRDrive.set(right);
-        backRDrive.set(right);
+        m_leftFrontDriveMotor.set(left);
+        m_leftRearDriveMotor.set(left);
+        m_rightFrontDriveMotor.set(right);
+        m_rightRearDriveMotor.set(right);
     }
 
     /**
@@ -193,7 +216,7 @@ public class Drivetrain extends SubsystemBase
      */
     public double leftEncoderDistance()
     {
-        return -frontLDrive.getSelectedSensorPosition();
+        return -m_leftFrontDriveMotor.getSelectedSensorPosition();
     }
 
     /**
@@ -207,7 +230,7 @@ public class Drivetrain extends SubsystemBase
      */
     public double rightEncoderDistance()
     {
-        return -frontRDrive.getSelectedSensorPosition();
+        return -m_rightFrontDriveMotor.getSelectedSensorPosition();
     }
 
     /**
@@ -220,7 +243,7 @@ public class Drivetrain extends SubsystemBase
      */
     public double leftEncoderRate()
     {
-        return -frontLDrive.getSelectedSensorVelocity();
+        return -m_leftFrontDriveMotor.getSelectedSensorVelocity();
     }
 
     /**
@@ -233,7 +256,7 @@ public class Drivetrain extends SubsystemBase
      */
     public double rightEncoderRate()
     {
-        return -frontLDrive.getSelectedSensorVelocity();
+        return -m_leftFrontDriveMotor.getSelectedSensorVelocity();
     }
 
     /**
@@ -246,9 +269,9 @@ public class Drivetrain extends SubsystemBase
      */
     public void zeroSensors()
     {
-        gyro.reset();
-        frontLDrive.setSelectedSensorPosition(0);
-        frontRDrive.setSelectedSensorPosition(0);
+        m_gyro.reset();
+        m_leftFrontDriveMotor.setSelectedSensorPosition(0);
+        m_rightFrontDriveMotor.setSelectedSensorPosition(0);
     }
 
     /**
@@ -262,7 +285,7 @@ public class Drivetrain extends SubsystemBase
 
     public double getGyroYaw()
     {
-        return gyro.getAngle() - gyroWorkingZero;
+        return m_gyro.getAngle() - m_gyroWorkingZero;
     }
 
     /**
@@ -275,7 +298,7 @@ public class Drivetrain extends SubsystemBase
      */
     public void setGyroYaw(final double yaw)
     {
-        gyroWorkingZero = gyro.getAngle() - yaw;
+        m_gyroWorkingZero = m_gyro.getAngle() - yaw;
     }
 
     /**
@@ -288,10 +311,10 @@ public class Drivetrain extends SubsystemBase
      */
     public void stop()
     {
-        backLDrive.set(0);
-        frontLDrive.set(0);
-        backRDrive.set(0);
-        frontRDrive.set(0);
+        m_leftRearDriveMotor.set(0);
+        m_leftFrontDriveMotor.set(0);
+        m_rightRearDriveMotor.set(0);
+        m_rightFrontDriveMotor.set(0);
     }
 
     /**
@@ -305,7 +328,7 @@ public class Drivetrain extends SubsystemBase
      */
     public void setFrontLDrive(final double power)
     {
-        frontLDrive.set(power);
+        m_leftFrontDriveMotor.set(power);
     }
 
     /*
@@ -317,17 +340,17 @@ public class Drivetrain extends SubsystemBase
      */
     public void setBackLDrive(final double power)
     {
-        backLDrive.set(power);
+        m_leftRearDriveMotor.set(power);
     }
 
     public void setFrontRDrive(final double power)
     {
-        frontRDrive.set(power);
+        m_rightFrontDriveMotor.set(power);
     }
 
     public void setBackRDrive(final double power)
     {
-        backRDrive.set(power);
+        m_rightRearDriveMotor.set(power);
     }
 
     public boolean angleIsStable = false;
@@ -335,13 +358,13 @@ public class Drivetrain extends SubsystemBase
     public void turnToAngle(final double setpointAngle)
     {
         final double currentAngle = getGyroYaw();
-        turnPID.setMaxOutput(1.0);
-        turnPID.setConstants(Constants.PTurn, Constants.ITurn, Constants.DTurn);
+        m_turnPID.setMaxOutput(1.0);
+        m_turnPID.setConstants(Constants.PTurn, Constants.ITurn, Constants.DTurn);
 
-        if (!turnPID.isDone())
+        if (!m_turnPID.isDone())
         {
-            turnPID.setDesiredValue(setpointAngle);
-            final double turnPower = turnPID.calcPID(currentAngle);
+            m_turnPID.setDesiredValue(setpointAngle);
+            final double turnPower = m_turnPID.calcPID(currentAngle);
             setLeftRightPower(turnPower, -turnPower);
             angleIsStable = false;
         }
@@ -416,7 +439,7 @@ public class Drivetrain extends SubsystemBase
 
     public void arcadeDrive(final double throttle, final double turn)
     {
-        drive.arcadeDrive(throttle, turn);
+        m_drive.arcadeDrive(throttle, turn);
     }
 
     public void deadbandedArcadeDrive()
@@ -462,7 +485,7 @@ public class Drivetrain extends SubsystemBase
     public void setHoldPosition()
     {
         zeroSensors();
-        drivePID.setDesiredValue(0);
-        turnPID.setDesiredValue(0);
+        m_drivePID.setDesiredValue(0);
+        m_turnPID.setDesiredValue(0);
     }
 }

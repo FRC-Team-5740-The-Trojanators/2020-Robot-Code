@@ -8,7 +8,10 @@
  */
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -32,21 +35,35 @@ public class RobotContainer
     //TODO: Manual indexer, shooter, override toggle
 
     private final Indexer m_indexer = new Indexer(m_driverController);
-    private final Drivetrain m_drivetrain = new Drivetrain();
+    private final Drivetrain m_drivetrain; // = new Drivetrain();
     private final ControlPanel m_controlpanel = new ControlPanel();
     private final Climb m_climb = new Climb();
     private final Turret m_turret = new Turret();
     private final Intake m_intake = new Intake();
-    private final DashBoard m_dash = new DashBoard(m_drivetrain, m_indexer, m_turret, m_controlpanel, m_intake);
+    private final DashBoard m_dash; // = new DashBoard(m_drivetrain, m_indexer, m_turret, m_controlpanel, m_intake);
 
     public RobotContainer()
     {
+        WPI_TalonSRX m_leftFrontDriveMotor = new WPI_TalonSRX(Constants.leftDriveACAN);
+        WPI_TalonSRX m_rightFrontDriveMotor = new WPI_TalonSRX(Constants.rightDriveACAN);
+        WPI_TalonSRX m_leftRearDriveMotor = new WPI_TalonSRX(Constants.leftDriveBCAN);
+        WPI_TalonSRX m_rightRearDriveMotor = new WPI_TalonSRX(Constants.rightDriveBCAN);
+
+        ADXRS450_Gyro m_gyro = new ADXRS450_Gyro();
+    
+        m_drivetrain = new Drivetrain(m_leftFrontDriveMotor, m_rightFrontDriveMotor, 
+                                      m_leftRearDriveMotor, m_rightRearDriveMotor,
+                                      m_gyro);
+
+        m_dash = new DashBoard(m_drivetrain, m_indexer, m_turret, m_controlpanel, m_intake);
+
         configureButtonBindings();
 
         //m_autoCommand = new Autotestpath(m_drivetrain, m_intake, m_turret, m_indexer);
         m_autoCommand = new TestPathCommand(m_drivetrain);
 
         m_drivetrain.setDefaultCommand(new RunCommand(() -> m_drivetrain.deadbandedArcadeDrive(), m_drivetrain));
+        
         m_indexer.setDefaultCommand(new AutomatedIndexer(m_indexer));
         // m_dash.setDefaultCommand(new RunCommand(() -> m_dash.dashboardData(), m_dash));
         m_intake.setDefaultCommand(new RaiseIntake(m_intake));
