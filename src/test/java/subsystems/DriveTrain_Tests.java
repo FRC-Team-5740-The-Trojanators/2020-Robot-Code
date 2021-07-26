@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +33,7 @@ public class DriveTrain_Tests
 
     public void setup()
     {
-        System.out.println("start here");
+        //System.out.println("start here");
         
         m_leftFrontDriveMotor = mock(WPI_TalonSRX.class);
         m_rightFrontDriveMotor = mock(WPI_TalonSRX.class);
@@ -58,5 +59,57 @@ public class DriveTrain_Tests
        // m_dt.stop();
         assertTrue(true);
     }
+
+    @Test
+    public void deadbandArcadeDrive_InsideDeadband_Returns_0()
+    {
+        // Arrange
+        setup();
+
+        var joyStickValue = 0.07;
+        var deadBandLowLimit = -0.1;
+        var deadbandHighLimit = 0.1;
+
+        // Act
+        var actual = m_dt.calculateDeadband(joyStickValue, deadBandLowLimit, deadbandHighLimit);
+
+        // Assert
+        assertEquals(0.0, actual);
+    }
+
+    @Test
+    public void deadbandArcadeDrive_valueLT_Deadband_Returns_NegativeValue()
+    {
+        // Arrange
+        setup();
+
+        var joyStickValue = -0.5;
+        var deadBandLowLimit = -0.1;
+        var deadbandHighLimit = 0.1;
+
+        // Act
+        var actual = m_dt.calculateDeadband(joyStickValue, deadBandLowLimit, deadbandHighLimit);
+
+        // Assert
+        assertTrue(actual < 0);
+    }
+
+    @Test
+    public void deadbandArcadeDrive_valueGT_Deadband_Returns_PositiveValue()
+    {
+        // Arrange
+        setup();
+
+        var joyStickValue = 0.5;
+        var deadBandLowLimit = -0.1;
+        var deadbandHighLimit = 0.1;
+
+        // Act
+        var actual = m_dt.calculateDeadband(joyStickValue, deadBandLowLimit, deadbandHighLimit);
+
+        // Assert
+        assertTrue(actual > 0);
+    }
+    
     
 }

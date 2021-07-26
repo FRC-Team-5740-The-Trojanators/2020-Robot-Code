@@ -57,11 +57,8 @@ public class Drivetrain extends SubsystemBase
 
         m_gyro = gyro;// = new ADXRS450_Gyro();
 
-
         m_turnPID = new PID(Constants.PTurn, Constants.ITurn, Constants.DTurn, Constants.turnEpsilon);
         m_drivePID = new PID(Constants.PDrive, Constants.IDrive, Constants.DDrive, 1.0);
-
-
 
         leftDriveGroup = new SpeedControllerGroup(m_leftFrontDriveMotor, m_leftRearDriveMotor);
         rightDriveGroup = new SpeedControllerGroup(m_rightFrontDriveMotor, m_rightRearDriveMotor);
@@ -442,45 +439,38 @@ public class Drivetrain extends SubsystemBase
         m_drive.arcadeDrive(throttle, turn);
     }
 
+
     public void deadbandedArcadeDrive()
     {
         double throttle, turn;
-        if (RobotContainer.m_driverController.getRawAxis(Constants.kRightStickX) > 0.1
-                || RobotContainer.m_driverController.getRawAxis(Constants.kRightStickX) < -0.1)
-        {
-            if (RobotContainer.m_driverController.getRawAxis(Constants.kRightStickX) < 0)
-            {
-                throttle = -Math.sqrt(Math.abs(RobotContainer.m_driverController.getRawAxis(Constants.kRightStickX)));
-            }
-            else
-            {
-                throttle = Math.sqrt(RobotContainer.m_driverController.getRawAxis(Constants.kRightStickX));
-            }
-        }
-        else
-        {
-            throttle = 0;
-        }
+        
+        throttle = calculateDeadband(RobotContainer.m_driverController.getRawAxis(Constants.kRightStickX), -0.1, 0.1);
+        turn = calculateDeadband(RobotContainer.m_driverController.getRawAxis(Constants.kLeftStickY), -0.2, 0.2);
 
-        /* check deadband */
-        if (RobotContainer.m_driverController.getRawAxis(Constants.kLeftStickY) > 0.2
-                || RobotContainer.m_driverController.getRawAxis(Constants.kLeftStickY) < -0.2)
-        {
-            if (RobotContainer.m_driverController.getRawAxis(Constants.kLeftStickY) < 0)
-            {
-                turn = -Math.sqrt(Math.abs(RobotContainer.m_driverController.getRawAxis(Constants.kLeftStickY)));
-            }
-            else
-            {
-                turn = Math.sqrt(RobotContainer.m_driverController.getRawAxis(Constants.kLeftStickY));
-            }
-        }
-        else
-        {
-            turn = 0;
-        }
         arcadeDrive(throttle, -turn);
     }
+
+
+    public double calculateDeadband(double joystickValue, double deadBandLowLimit, double deadbandHighLimit) 
+    {
+        if ( (joystickValue > deadbandHighLimit) || (joystickValue < deadBandLowLimit) ) 
+        {
+            if (joystickValue < 0)
+            {
+                return -Math.sqrt(Math.abs(joystickValue));
+            }
+            else
+            {
+                return Math.sqrt(joystickValue);
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+
 
     public void setHoldPosition()
     {
